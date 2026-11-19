@@ -469,7 +469,7 @@ class _AppShellState extends State<AppShell> {
                           Text(
                             settingsProv.settings.businessName.isNotEmpty
                                 ? settingsProv.settings.businessName
-                                : 'AMC Management',
+                                : 'My Office / Company',
                             style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
                             overflow: TextOverflow.ellipsis,
                           ),

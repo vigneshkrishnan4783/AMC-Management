@@ -166,7 +166,7 @@ class CustomerDetailScreen extends StatelessWidget {
                             OutlinedButton.icon(
                               onPressed: () => _makePhoneCall(customer.phone),
                               icon: const Icon(Icons.phone, size: 16, color: AppColors.statusActive),
-                              label: Text(customer.phone),
+                              label: Text(Formatters.maskPhoneNumber(customer.phone)),
                             ),
                             OutlinedButton.icon(
                               onPressed: () => _sendEmail(customer.email),

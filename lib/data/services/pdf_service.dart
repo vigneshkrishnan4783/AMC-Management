@@ -40,7 +40,7 @@ class PdfService {
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Text(
-                    settings.businessName,
+                    settings.businessName.isNotEmpty ? settings.businessName : 'AMC Maintenance Services',
                     style: pw.TextStyle(
                       fontSize: 20,
                       fontWeight: pw.FontWeight.bold,
@@ -48,9 +48,14 @@ class PdfService {
                     ),
                   ),
                   pw.SizedBox(height: 4),
-                  pw.Text(settings.address, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-                  pw.Text('Phone: ${settings.phone}  |  Email: ${settings.email}',
-                      style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                  if (settings.address.isNotEmpty)
+                    pw.Text(settings.address, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+                  pw.Text(
+                    settings.phone.isNotEmpty
+                        ? 'Phone: ${settings.phone}  |  Email: ${settings.email}'
+                        : 'Email: ${settings.email}',
+                    style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+                  ),
                   if (settings.taxNumber != null && settings.taxNumber!.isNotEmpty)
                     pw.Text(settings.taxNumber!, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
                 ],
@@ -260,11 +265,17 @@ class PdfService {
               pw.Column(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
-                  pw.Text(settings.businessName,
-                      style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900)),
+                  pw.Text(
+                    settings.businessName.isNotEmpty ? settings.businessName : 'AMC Maintenance Services',
+                    style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold, color: PdfColors.blue900),
+                  ),
                   pw.Text('Service & Maintenance Division', style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
-                  pw.Text('Phone: ${settings.phone} | ${settings.email}',
-                      style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700)),
+                  pw.Text(
+                    settings.phone.isNotEmpty
+                        ? 'Phone: ${settings.phone} | ${settings.email}'
+                        : 'Email: ${settings.email}',
+                    style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+                  ),
                 ],
               ),
               pw.Container(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amc/core/theme/app_colors.dart';
 import 'package:amc/core/utils/breakpoints.dart';
+import 'package:amc/data/database/app_database.dart';
 import 'package:amc/data/models/company_settings.dart';
 import 'package:amc/data/services/backup_service.dart';
 import 'package:amc/providers/contract_provider.dart';
@@ -147,6 +148,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
+    }
+  }
+
+  Future<void> _confirmClearAllData() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Reset Database to Clean State?'),
+        content: const Text(
+          'This will purge all demo and cached data (customers, contracts, visits, equipment).\n\nYour app will be 100% clean and ready for your real business operations.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.statusExpired),
+            child: const Text('Reset Everything'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      await AppDatabase.instance.clearAllData();
+      if (!mounted) return;
+      await Future.wait([
+        context.read<CustomerProvider>().loadCustomers(),
+        context.read<ContractProvider>().loadContracts(),
+        context.read<ServiceVisitProvider>().loadVisits(),
+        context.read<ReminderProvider>().loadReminders(),
+        context.read<DocumentProvider>().loadDocuments(),
+        context.read<SettingsProvider>().loadSettings(),
+      ]);
+
+      if (!mounted) return;
+
+      final s = context.read<SettingsProvider>().settings;
+      _nameCtrl.text = s.businessName;
+      _phoneCtrl.text = s.phone;
+      _emailCtrl.text = s.email;
+      _addressCtrl.text = s.address;
+      _websiteCtrl.text = s.website ?? '';
+      _taxCtrl.text = s.taxNumber ?? '';
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Database has been completely cleaned and reset!'),
+          backgroundColor: AppColors.statusActive,
+        ),
+      );
     }
   }
 
@@ -403,6 +457,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Clean Database & Data Reset Card
+                  Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: AppColors.statusExpired.withOpacity(0.3)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.statusExpired.withOpacity(0.12),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(Icons.delete_sweep_rounded, color: AppColors.statusExpired, size: 20),
+                              ),
+                              const SizedBox(width: 12),
+                              const Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'CLEAN DATA & RESET DATABASE',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.statusExpired),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Permanently purge all demo/cached records to start completely clean',
+                                    style: TextStyle(fontSize: 11, color: AppColors.lightTextSecondary),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 24),
+                          OutlinedButton.icon(
+                            onPressed: _confirmClearAllData,
+                            icon: const Icon(Icons.cleaning_services_outlined, size: 18, color: AppColors.statusExpired),
+                            label: const Text('Reset to Clean Database (Wipe Demo Data)', style: TextStyle(color: AppColors.statusExpired)),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.statusExpired),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
                   // Appearance Theme Card
                   Card(
                     child: Padding(
@@ -459,8 +566,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 flex: 3,
                                 child: TextFormField(
                                   controller: _nameCtrl,
-                                  decoration: const InputDecoration(labelText: 'Company / Business Name *'),
-                                  validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Company / Business Name',
+                                    hintText: 'Enter your Office / Company Name',
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
@@ -468,7 +577,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 flex: 1,
                                 child: TextFormField(
                                   controller: _currencyCtrl,
-                                  decoration: const InputDecoration(labelText: 'Currency Symbol *'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Currency Symbol *',
+                                    hintText: '₹',
+                                  ),
                                   validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,
                                 ),
                               ),
@@ -480,14 +592,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _phoneCtrl,
-                                  decoration: const InputDecoration(labelText: 'Business Phone Number'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Business Phone Number',
+                                    hintText: '+91 XXXXX XXXXX',
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: TextFormField(
                                   controller: _emailCtrl,
-                                  decoration: const InputDecoration(labelText: 'Business Support Email'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Business Support Email',
+                                    hintText: 'vigneshkrishnan4786@gmail.com',
+                                  ),
                                 ),
                               ),
                             ],
@@ -498,14 +616,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               Expanded(
                                 child: TextFormField(
                                   controller: _taxCtrl,
-                                  decoration: const InputDecoration(labelText: 'GSTIN / VAT / Tax ID'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'GSTIN / VAT / Tax ID',
+                                    hintText: 'e.g. 29AAAAA0000A1Z5',
+                                  ),
                                 ),
                               ),
                               const SizedBox(width: 14),
                               Expanded(
                                 child: TextFormField(
                                   controller: _websiteCtrl,
-                                  decoration: const InputDecoration(labelText: 'Website'),
+                                  decoration: const InputDecoration(
+                                    labelText: 'Website',
+                                    hintText: 'www.yourcompany.com',
+                                  ),
                                 ),
                               ),
                             ],
@@ -514,7 +638,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           TextFormField(
                             controller: _addressCtrl,
                             maxLines: 2,
-                            decoration: const InputDecoration(labelText: 'Business Physical Address'),
+                            decoration: const InputDecoration(
+                              labelText: 'Business Physical Address',
+                              hintText: 'Enter office or premises address',
+                            ),
                           ),
                         ],
                       ),

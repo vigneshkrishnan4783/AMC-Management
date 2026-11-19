@@ -409,7 +409,7 @@ class _ServiceVisitDetailScreenState extends State<ServiceVisitDetailScreen> {
                                 const SizedBox(height: 10),
                                 Text(customer.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                                 const SizedBox(height: 4),
-                                Text('${customer.phone} • ${customer.address}', style: const TextStyle(fontSize: 12, color: AppColors.lightTextSecondary)),
+                                Text('${Formatters.maskPhoneNumber(customer.phone)} • ${customer.address}', style: const TextStyle(fontSize: 12, color: AppColors.lightTextSecondary)),
                               ],
                             ),
                           ),

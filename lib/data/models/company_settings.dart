@@ -12,9 +12,9 @@ class CompanySettings {
   final String poweredBy;
 
   CompanySettings({
-    this.businessName = 'AMC Management',
+    this.businessName = '',
     this.phone = '',
-    this.email = 'vignesh.krishnan@citrusinfomatics.com',
+    this.email = 'vigneshkrishnan4786@gmail.com',
     this.address = '',
     this.website = '',
     this.taxNumber = '',
@@ -51,9 +51,9 @@ class CompanySettings {
 
   factory CompanySettings.fromMap(Map<String, dynamic> map) {
     return CompanySettings(
-      businessName: map['business_name'] as String? ?? 'AMC Management',
+      businessName: map['business_name'] as String? ?? '',
       phone: map['phone'] as String? ?? '',
-      email: map['email'] as String? ?? 'vignesh.krishnan@citrusinfomatics.com',
+      email: map['email'] as String? ?? 'vigneshkrishnan4786@gmail.com',
       address: map['address'] as String? ?? '',
       website: map['website'] as String? ?? '',
       taxNumber: map['tax_number'] as String? ?? '',

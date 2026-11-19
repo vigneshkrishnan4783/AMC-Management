@@ -128,6 +128,7 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
                           controller: _phoneController,
                           decoration: const InputDecoration(
                             labelText: 'Phone Number *',
+                            hintText: '+91 XXXXX XXXXX',
                             prefixIcon: Icon(Icons.phone_outlined),
                           ),
                           validator: (v) => v == null || v.trim().isEmpty ? 'Required' : null,

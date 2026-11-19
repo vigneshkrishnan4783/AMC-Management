@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amc/core/theme/app_colors.dart';
 import 'package:amc/core/utils/breakpoints.dart';
+import 'package:amc/core/utils/formatters.dart';
 import 'package:amc/data/models/customer.dart';
 import 'package:amc/providers/customer_provider.dart';
 import 'customer_detail_screen.dart';
@@ -207,7 +208,7 @@ class CustomersScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.phone_outlined, size: 14, color: AppColors.lightTextSecondary),
                   const SizedBox(width: 6),
-                  Text(customer.phone, style: const TextStyle(fontSize: 12, color: AppColors.lightTextSecondary)),
+                  Text(Formatters.maskPhoneNumber(customer.phone), style: const TextStyle(fontSize: 12, color: AppColors.lightTextSecondary)),
                 ],
               ),
               const SizedBox(height: 4),

@@ -55,7 +55,9 @@ class DashboardScreen extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            settingsProv.settings.businessName,
+                            settingsProv.settings.businessName.isNotEmpty
+                                ? settingsProv.settings.businessName
+                                : 'AMC Operations Manager',
                             style: TextStyle(
                               fontSize: isDesktop ? 24 : 18,
                               fontWeight: FontWeight.bold,

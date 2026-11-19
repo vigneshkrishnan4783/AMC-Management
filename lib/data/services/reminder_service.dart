@@ -33,7 +33,8 @@ class ReminderService {
         isSent: false,
         reminderType: 'email',
         recipientEmail: customer.email,
-        notes: 'Renewal notice scheduled for $days day(s) before expiry (${_dateFormat.format(contract.endDate)})',
+        notes:
+            'Renewal notice scheduled for $days day(s) before expiry (${_dateFormat.format(contract.endDate)})',
       );
 
       await db.insertReminder(reminder);
@@ -52,15 +53,22 @@ class ReminderService {
         ? 'EXPIRATION NOTICE'
         : (daysRemaining <= 7 ? 'URGENT RENEWAL REMINDER' : 'RENEWAL REMINDER');
 
-    final subject = '$urgency: Annual Maintenance Contract [${contract.contractNumber}] - ${customer.company ?? customer.name}';
+    final subject =
+        '$urgency: Annual Maintenance Contract [${contract.contractNumber}] - ${customer.company ?? customer.name}';
 
     final equipmentLines = equipmentList.isNotEmpty
-        ? equipmentList.map((e) => '  • ${e.name} (${e.brand ?? ""} ${e.modelNumber ?? ""}) - Serial: ${e.serialNumber ?? "N/A"}').join('\n')
+        ? equipmentList
+            .map((e) =>
+                '  • ${e.name} (${e.brand ?? ""} ${e.modelNumber ?? ""}) - Serial: ${e.serialNumber ?? "N/A"}')
+            .join('\n')
         : '  • All equipment registered under contract ${contract.contractNumber}';
+
+    final senderName = settings.businessName.isNotEmpty ? settings.businessName : 'AMC Maintenance Services';
+    final contactPhone = settings.phone.isNotEmpty ? 'at ${settings.phone} / ${settings.email}' : 'at ${settings.email}';
 
     final body = '''Dear ${customer.name},
 
-Greetings from ${settings.businessName}.
+Greetings from $senderName.
 
 This is a courtesy reminder regarding your Annual Maintenance Contract (${contract.title}), Contract Reference #${contract.contractNumber}.
 
@@ -74,16 +82,15 @@ $equipmentLines
 
 To ensure uninterrupted service visits, priority breakdown response, and genuine parts coverage, we recommend renewing your contract before expiry.
 
-Please reply to this email or reach us directly at ${settings.phone} / ${settings.email} to confirm your renewal or request an updated quotation.
+Please reply to this email or reach us directly $contactPhone to confirm your renewal or request an updated quotation.
 
-Thank you for trusting ${settings.businessName}.
+Thank you for trusting $senderName.
 
 Warm regards,
 
 Service Coordination Team
-${settings.businessName}
-Phone: ${settings.phone}
-Email: ${settings.email}
+$senderName
+${settings.phone.isNotEmpty ? 'Phone: ${settings.phone}\n' : ''}Email: ${settings.email}
 ${settings.website ?? ""}
 ''';
 

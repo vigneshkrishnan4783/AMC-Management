@@ -61,4 +61,23 @@ class Formatters {
         .map((w) => w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1).toLowerCase()}' : '')
         .join(' ');
   }
+
+  static String maskPhoneNumber(String? phone) {
+    if (phone == null || phone.trim().isEmpty) return '';
+    final trimmed = phone.trim();
+    if (trimmed.startsWith('+91')) {
+      final clean = trimmed.substring(3).replaceAll(RegExp(r'\s+'), '');
+      if (clean.length >= 5) {
+        return '+91 ${clean.substring(0, 2)}XXX XXXXX';
+      }
+      return '+91 XXXXX XXXXX';
+    }
+    final digits = trimmed.replaceAll(RegExp(r'\D'), '');
+    if (digits.length >= 10) {
+      return '${digits.substring(0, 2)}XXX XXXXX';
+    } else if (digits.length >= 4) {
+      return '${digits.substring(0, 2)}XX XXXX';
+    }
+    return 'XXXXX XXXXX';
+  }
 }

@@ -83,35 +83,61 @@ class AppDatabase {
           await db.execute('ALTER TABLE ${Tables.settings} ADD COLUMN powered_by TEXT DEFAULT "Citrus Informatics"');
         } catch (_) {}
 
-        // Purge any legacy sample data
+        // Thoroughly purge any legacy sample data
         try {
-          await db.delete(Tables.customers, where: 'email IN (?, ?, ?)', whereArgs: [
-            'admin@apexhospital.org',
-            'secretary@greenvalleyrwa.com',
-            'vikram@mehtalabs.in',
-          ]);
-          await db.delete(Tables.contracts, where: 'contract_number IN (?, ?, ?)', whereArgs: [
-            'AMC-2026-001',
-            'AMC-2026-002',
-            'AMC-2025-089',
-          ]);
+          await db.execute('PRAGMA foreign_keys = OFF');
+          await db.delete(
+            Tables.checklistItems,
+            where: "visit_id IN (SELECT id FROM ${Tables.serviceVisits} WHERE technician_name IN ('Suresh Kumar', 'Anil Verma'))",
+          );
+          await db.delete(
+            Tables.partsReplaced,
+            where: "visit_id IN (SELECT id FROM ${Tables.serviceVisits} WHERE technician_name IN ('Suresh Kumar', 'Anil Verma'))",
+          );
+          await db.delete(
+            Tables.serviceVisits,
+            where: "technician_name IN ('Suresh Kumar', 'Anil Verma')",
+          );
+          await db.delete(
+            Tables.equipment,
+            where: "serial_number IN ('DK-2023-88912', 'KIR-90214-G', 'VL-774102-P')",
+          );
+          await db.delete(
+            Tables.reminders,
+            where: "contract_id IN (SELECT id FROM ${Tables.contracts} WHERE contract_number IN ('AMC-2026-001', 'AMC-2026-002', 'AMC-2025-089'))",
+          );
+          await db.delete(
+            Tables.contracts,
+            where: "contract_number IN ('AMC-2026-001', 'AMC-2026-002', 'AMC-2025-089')",
+          );
+          await db.delete(
+            Tables.customers,
+            where: "email LIKE '%apexhospital%' OR email LIKE '%greenvalley%' OR email LIKE '%mehtalabs%' OR email LIKE '%@xxx%' OR name IN ('Dr. Ramesh Sharma', 'Priya Narayanan', 'Vikram Mehta') OR phone LIKE '%98450%' OR phone LIKE '%98860%' OR phone LIKE '%97410%'",
+          );
+          await db.execute('PRAGMA foreign_keys = ON');
         } catch (_) {}
 
         try {
           final cur = await db.query(Tables.settings, where: 'id = 1');
           if (cur.isNotEmpty) {
-            final email = cur.first['email'] as String?;
-            final phone = cur.first['phone'] as String?;
-            if (email == 'service@amcmanager.com' || phone == '+91 98765 43210') {
+            final email = cur.first['email'] as String? ?? '';
+            final phone = cur.first['phone'] as String? ?? '';
+            final bName = cur.first['business_name'] as String? ?? '';
+            final addr = cur.first['address'] as String? ?? '';
+            if (email == 'service@amcmanager.com' ||
+                bName == 'AMC Services Pvt Ltd' ||
+                bName == 'AMC Management' ||
+                phone.contains('98765') ||
+                addr.contains('101 Tech')) {
               await db.update(
                 Tables.settings,
                 {
-                  'email': 'vignesh.krishnan@citrusinfomatics.com',
+                  'email': 'vigneshkrishnan4786@gmail.com',
                   'phone': '',
                   'address': '',
                   'website': '',
                   'tax_number': '',
-                  'business_name': 'AMC Management',
+                  'business_name': '',
                   'powered_by': 'Citrus Informatics',
                 },
                 where: 'id = 1',
@@ -120,6 +146,34 @@ class AppDatabase {
           }
         } catch (_) {}
       },
+    );
+  }
+
+  /// Wipe all data to start fresh
+  Future<void> clearAllData() async {
+    final db = await database;
+    await db.execute('PRAGMA foreign_keys = OFF');
+    await db.delete(Tables.checklistItems);
+    await db.delete(Tables.partsReplaced);
+    await db.delete(Tables.serviceVisits);
+    await db.delete(Tables.equipment);
+    await db.delete(Tables.reminders);
+    await db.delete(Tables.documents);
+    await db.delete(Tables.contracts);
+    await db.delete(Tables.customers);
+    await db.execute('PRAGMA foreign_keys = ON');
+    await db.update(
+      Tables.settings,
+      {
+        'business_name': '',
+        'phone': '',
+        'email': 'vigneshkrishnan4786@gmail.com',
+        'address': '',
+        'website': '',
+        'tax_number': '',
+        'powered_by': 'Citrus Informatics',
+      },
+      where: 'id = 1',
     );
   }
 

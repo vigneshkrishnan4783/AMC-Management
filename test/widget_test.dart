@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:amc/core/utils/formatters.dart';
 import 'package:amc/data/models/contract.dart';
 import 'package:amc/data/models/company_settings.dart';
 import 'package:amc/providers/subscription_provider.dart';
@@ -43,10 +44,17 @@ void main() {
 
   test('CompanySettings has clean defaults with correct user email and branding', () {
     final settings = CompanySettings();
-    expect(settings.email, 'vignesh.krishnan@citrusinfomatics.com');
+    expect(settings.email, 'vigneshkrishnan4786@gmail.com');
     expect(settings.phone, ''); // No hardcoded fake phone
     expect(settings.address, ''); // No hardcoded fake address
+    expect(settings.businessName, ''); // No hardcoded fake business name
     expect(settings.poweredBy, 'Citrus Informatics');
+  });
+
+  test('Formatters maskPhoneNumber hides digits with XXXXX', () {
+    expect(Formatters.maskPhoneNumber('+91 97410 55667'), '+91 97XXX XXXXX');
+    expect(Formatters.maskPhoneNumber('9845011223'), '98XXX XXXXX');
+    expect(Formatters.maskPhoneNumber(''), '');
   });
 
   test('SubscriptionProvider initializes 30-day trial and activates license keys', () async {

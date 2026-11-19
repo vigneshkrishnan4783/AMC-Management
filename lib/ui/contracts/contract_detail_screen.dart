@@ -396,7 +396,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                                   Text(customer.company!, style: const TextStyle(fontSize: 13, color: AppColors.primaryLight, fontWeight: FontWeight.w500)),
                                 ],
                                 const SizedBox(height: 12),
-                                _buildDetailRow('Phone', customer.phone),
+                                _buildDetailRow('Phone', Formatters.maskPhoneNumber(customer.phone)),
                                 _buildDetailRow('Email', customer.email),
                                 _buildDetailRow('Service Address', customer.address),
                                 if (customer.notes != null) _buildDetailRow('Customer Notes', customer.notes!),

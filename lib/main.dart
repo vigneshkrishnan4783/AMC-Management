@@ -23,9 +23,9 @@ void main() async {
   final db = AppDatabase.instance;
   await db.database;
 
-  // Check onboarding flag
+  // Check onboarding flag (v2 ensures fresh guidance slides on first launch)
   final prefs = await SharedPreferences.getInstance();
-  final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
+  final hasSeenOnboarding = prefs.getBool('has_seen_onboarding_v2') ?? false;
 
   runApp(AmcManagerApp(hasSeenOnboarding: hasSeenOnboarding));
 }
