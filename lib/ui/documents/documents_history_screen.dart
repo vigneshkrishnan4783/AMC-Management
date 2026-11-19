@@ -8,7 +8,13 @@ import 'package:amc/core/theme/app_colors.dart';
 import 'package:amc/core/utils/breakpoints.dart';
 import 'package:amc/core/utils/formatters.dart';
 import 'package:amc/data/models/document_record.dart';
+import 'package:amc/data/services/pdf_service.dart';
+import 'package:amc/providers/contract_provider.dart';
+import 'package:amc/providers/customer_provider.dart';
 import 'package:amc/providers/document_provider.dart';
+import 'package:amc/providers/service_visit_provider.dart';
+import 'package:amc/providers/settings_provider.dart';
+import 'pdf_viewer_screen.dart';
 
 class DocumentsHistoryScreen extends StatefulWidget {
   const DocumentsHistoryScreen({super.key});
@@ -28,26 +34,112 @@ class _DocumentsHistoryScreenState extends State<DocumentsHistoryScreen> {
     });
   }
 
-  Future<void> _openOrShareDocument(DocumentRecord doc) async {
+  Future<Uint8List?> _resolvePdfBytes(DocumentRecord doc) async {
+    final settings = context.read<SettingsProvider>().settings;
+    final contractProv = context.read<ContractProvider>();
+    final customerProv = context.read<CustomerProvider>();
+    final visitProv = context.read<ServiceVisitProvider>();
+
+    // 1. Try reading from local file if available
     if (!kIsWeb) {
       final file = File(doc.filePath);
-      if (!await file.exists()) {
+      if (await file.exists()) {
+        return await file.readAsBytes();
+      }
+    }
+
+    // 2. Re-synthesize from model data
+    if (doc.entityType == 'contract') {
+      final contract = contractProv.allContracts.firstWhere(
+        (c) => c.id == doc.entityId,
+        orElse: () => contractProv.allContracts.first,
+      );
+      final customer = customerProv.customers.firstWhere(
+        (c) => c.id == contract.customerId,
+        orElse: () => customerProv.customers.first,
+      );
+      final eqList = await contractProv.getEquipmentForContract(contract.id);
+      return await PdfService.generateContractPdf(
+        contract: contract,
+        customer: customer,
+        equipmentList: eqList,
+        settings: settings,
+      );
+    } else if (doc.entityType == 'visit') {
+      final visit = visitProv.allVisits.firstWhere(
+        (v) => v.id == doc.entityId,
+        orElse: () => visitProv.allVisits.first,
+      );
+      final contract = contractProv.allContracts.firstWhere(
+        (c) => c.id == visit.contractId,
+        orElse: () => contractProv.allContracts.first,
+      );
+      final customer = customerProv.customers.firstWhere(
+        (c) => c.id == visit.customerId,
+        orElse: () => customerProv.customers.first,
+      );
+      return await PdfService.generateServiceReportPdf(
+        visit: visit,
+        customer: customer,
+        contract: contract,
+        settings: settings,
+      );
+    }
+    return null;
+  }
+
+  void _viewPdf(DocumentRecord doc) {
+    final safeName = '${doc.title.replaceAll(RegExp(r"[^\w\.-]"), "_")}.pdf';
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewerScreen(
+          title: doc.title,
+          filename: safeName,
+          pdfBytesBuilder: () async {
+            final bytes = await _resolvePdfBytes(doc);
+            if (bytes == null) {
+              throw Exception('Unable to load or synthesize document bytes.');
+            }
+            return bytes;
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadOrShareDocument(DocumentRecord doc) async {
+    final isPdf = doc.documentType == 'pdf';
+    final safeName = '${doc.title.replaceAll(RegExp(r"[^\w\.-]"), "_")}.${doc.documentType}';
+
+    if (isPdf) {
+      try {
+        final bytes = await _resolvePdfBytes(doc);
+        if (bytes != null) {
+          await Printing.sharePdf(bytes: bytes, filename: safeName);
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Downloaded: $safeName'),
+                backgroundColor: AppColors.statusActive,
+              ),
+            );
+          }
+          return;
+        }
+      } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('File not found on device storage.'), backgroundColor: AppColors.statusExpired),
+            SnackBar(content: Text('Error downloading: $e'), backgroundColor: AppColors.statusExpired),
           );
         }
         return;
       }
+    }
 
-      final bytes = await file.readAsBytes();
-
-      if (doc.documentType == 'pdf') {
-        await Printing.layoutPdf(
-          onLayout: (_) => bytes,
-          name: doc.title,
-        );
-      } else {
+    if (!kIsWeb) {
+      final file = File(doc.filePath);
+      if (await file.exists()) {
         await SharePlus.instance.share(
           ShareParams(
             files: [XFile(doc.filePath)],
@@ -97,59 +189,45 @@ class _DocumentsHistoryScreenState extends State<DocumentsHistoryScreen> {
                         ),
                         const SizedBox(height: 4),
                         const Text(
-                          'Retrieve earlier copies of AMC agreements and service reports',
-                          style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
+                          'View, download, and share past agreements & service reports',
+                          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                         ),
                       ],
+                    ),
+                    SegmentedButton<String>(
+                      segments: const [
+                        ButtonSegment(value: 'all', label: Text('All')),
+                        ButtonSegment(value: 'pdf', label: Text('PDF')),
+                        ButtonSegment(value: 'docx', label: Text('Word')),
+                      ],
+                      selected: {_filterType},
+                      onSelectionChanged: (val) {
+                        setState(() => _filterType = val.first);
+                      },
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
 
-                // Filter Chips
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      FilterChip(
-                        label: Text('All (${docProv.documents.length})'),
-                        selected: _filterType == 'all',
-                        onSelected: (_) => setState(() => _filterType = 'all'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text('PDF Documents (${docProv.documents.where((d) => d.documentType == 'pdf').length})'),
-                        selected: _filterType == 'pdf',
-                        onSelected: (_) => setState(() => _filterType = 'pdf'),
-                      ),
-                      const SizedBox(width: 8),
-                      FilterChip(
-                        label: Text('Word Documents (.docx) (${docProv.documents.where((d) => d.documentType == 'docx').length})'),
-                        selected: _filterType == 'docx',
-                        onSelected: (_) => setState(() => _filterType = 'docx'),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // Content
-                if (docProv.isLoading)
-                  const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()))
-                else if (docs.isEmpty)
-                  const Card(
+                if (docs.isEmpty)
+                  Card(
                     child: Padding(
-                      padding: EdgeInsets.all(40),
+                      padding: const EdgeInsets.all(40),
                       child: Center(
                         child: Column(
                           children: [
-                            Icon(Icons.history_edu_outlined, size: 48, color: AppColors.lightTextSecondary),
-                            SizedBox(height: 12),
-                            Text('No generated documents found', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 6),
+                            const Icon(Icons.folder_open_outlined, size: 48, color: AppColors.textSecondary),
+                            const SizedBox(height: 12),
                             Text(
+                              _filterType == 'all'
+                                  ? 'No documents generated yet'
+                                  : 'No ${_filterType.toUpperCase()} documents found',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 6),
+                            const Text(
                               'Generate PDF agreements or export Word copies from any contract or service visit.',
-                              style: TextStyle(fontSize: 12, color: AppColors.lightTextSecondary),
+                              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                               textAlign: TextAlign.center,
                             ),
                           ],
@@ -188,12 +266,12 @@ class _DocumentsHistoryScreenState extends State<DocumentsHistoryScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Type: ${doc.documentType.toUpperCase()} • Size: $sizeKb KB • Created: ${Formatters.formatDateTime(doc.createdAt)}',
-                              style: const TextStyle(fontSize: 11, color: AppColors.lightTextSecondary),
+                              style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               doc.filePath,
-                              style: const TextStyle(fontSize: 10, color: AppColors.lightTextSecondary),
+                              style: const TextStyle(fontSize: 10, color: AppColors.textSecondary),
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
@@ -201,11 +279,27 @@ class _DocumentsHistoryScreenState extends State<DocumentsHistoryScreen> {
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            FilledButton.tonal(
-                              onPressed: () => _openOrShareDocument(doc),
-                              child: Text(isPdf ? 'View / Print' : 'Open / Share', style: const TextStyle(fontSize: 12)),
+                            if (isPdf) ...[
+                              FilledButton.icon(
+                                onPressed: () => _viewPdf(doc),
+                                icon: const Icon(Icons.visibility_outlined, size: 14),
+                                label: const Text('View PDF', style: TextStyle(fontSize: 12)),
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                            ],
+                            FilledButton.tonalIcon(
+                              onPressed: () => _downloadOrShareDocument(doc),
+                              icon: const Icon(Icons.download_rounded, size: 14),
+                              label: Text(isPdf ? 'Download' : 'Share', style: const TextStyle(fontSize: 12)),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: 6),
                             IconButton(
                               icon: const Icon(Icons.delete_outline, size: 18, color: AppColors.statusExpired),
                               onPressed: () async {

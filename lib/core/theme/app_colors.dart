@@ -33,4 +33,10 @@ class AppColors {
   static const Color darkTextPrimary = Color(0xFFFFFFFF);
   static const Color darkTextSecondary = Color(0xFFA3AED0);
   static const Color darkDivider = Color(0xFF1E293B);
+  // Aliases for convenience
+  static const Color success = statusActive;
+  static const Color warning = statusExpiring;
+  static const Color border = lightBorder;
+  static const Color textPrimary = lightTextPrimary;
+  static const Color textSecondary = lightTextSecondary;
 }

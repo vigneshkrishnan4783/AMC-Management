@@ -1,7 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:amc/data/models/contract.dart';
+import 'package:amc/data/models/company_settings.dart';
+import 'package:amc/providers/subscription_provider.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test('Contract daysUntilExpiry and status calculation test', () {
     final now = DateTime.now();
 
@@ -34,5 +39,30 @@ void main() {
       endDate: now.subtract(const Duration(days: 5)),
     );
     expect(expiredContract.computedStatus, 'expired');
+  });
+
+  test('CompanySettings has clean defaults with correct user email and branding', () {
+    final settings = CompanySettings();
+    expect(settings.email, 'vignesh.krishnan@citrusinfomatics.com');
+    expect(settings.phone, ''); // No hardcoded fake phone
+    expect(settings.address, ''); // No hardcoded fake address
+    expect(settings.poweredBy, 'Citrus Informatics');
+  });
+
+  test('SubscriptionProvider initializes 30-day trial and activates license keys', () async {
+    SharedPreferences.setMockInitialValues({});
+    final subProv = SubscriptionProvider();
+    await subProv.init();
+
+    expect(subProv.isInitialized, true);
+    expect(subProv.isSubscribed, false);
+    expect(subProv.daysRemaining, inInclusiveRange(29, 30));
+    expect(subProv.canCreateRecords, true);
+
+    // Test license key activation
+    final activated = await subProv.activateLicenseKey('CITRUS-2026-VIP');
+    expect(activated, true);
+    expect(subProv.isSubscribed, true);
+    expect(subProv.canCreateRecords, true);
   });
 }

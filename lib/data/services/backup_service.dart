@@ -62,7 +62,7 @@ class BackupService {
 
   /// Restore from backup file picked by user
   static Future<bool> restoreFromBackup() async {
-    final result = await FilePicker.pickFiles(
+    final result = await FilePicker.platform.pickFiles(
       type: FileType.any,
       allowMultiple: false,
     );

@@ -1,6 +1,5 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:amc/core/theme/app_colors.dart';
 import 'package:amc/core/utils/breakpoints.dart';
@@ -14,6 +13,7 @@ import 'package:amc/providers/customer_provider.dart';
 import 'package:amc/providers/document_provider.dart';
 import 'package:amc/providers/service_visit_provider.dart';
 import 'package:amc/providers/settings_provider.dart';
+import '../documents/pdf_viewer_screen.dart';
 import '../equipment/equipment_form_dialog.dart';
 import '../reminders/reminder_email_preview_dialog.dart';
 import '../service_visits/service_visit_detail_screen.dart';
@@ -51,32 +51,66 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     }
   }
 
-  Future<void> _generatePdf(Contract contract, Customer customer) async {
+  void _viewPdf(Contract contract, Customer customer) {
+    final settings = context.read<SettingsProvider>().settings;
+    final docProv = context.read<DocumentProvider>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewerScreen(
+          title: 'AMC Agreement - ${contract.contractNumber}',
+          filename: '${contract.contractNumber}_Agreement.pdf',
+          pdfBytesBuilder: () async {
+            final bytes = await PdfService.generateContractPdf(
+              contract: contract,
+              customer: customer,
+              equipmentList: _equipment,
+              settings: settings,
+            );
+            await docProv.generateAndSaveContractPdf(
+              contract: contract,
+              customer: customer,
+              equipmentList: _equipment,
+              settings: settings,
+            );
+            return bytes;
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf(Contract contract, Customer customer) async {
     final docProv = context.read<DocumentProvider>();
     final settingsProv = context.read<SettingsProvider>();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generating AMC Agreement PDF...')),
+      const SnackBar(content: Text('Preparing PDF download...')),
     );
 
     try {
-      final docRecord = await docProv.generateAndSaveContractPdf(
+      final bytes = await PdfService.generateContractPdf(
         contract: contract,
         customer: customer,
         equipmentList: _equipment,
         settings: settingsProv.settings,
       );
 
-      if (!kIsWeb) {
-        final file = File(docRecord.filePath);
-        final bytes = await file.readAsBytes();
-        await PdfService.shareOrPrintPdf(bytes, '${contract.contractNumber}_Agreement.pdf');
-      }
+      await docProv.generateAndSaveContractPdf(
+        contract: contract,
+        customer: customer,
+        equipmentList: _equipment,
+        settings: settingsProv.settings,
+      );
+
+      final filename = '${contract.contractNumber}_Agreement.pdf';
+      await Printing.sharePdf(bytes: bytes, filename: filename);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Agreement PDF saved to document history! (${docRecord.title})'),
+            content: Text('PDF downloaded & saved: $filename'),
             backgroundColor: AppColors.statusActive,
           ),
         );
@@ -84,7 +118,7 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating PDF: $e'), backgroundColor: AppColors.statusExpired),
+          SnackBar(content: Text('Error downloading PDF: $e'), backgroundColor: AppColors.statusExpired),
         );
       }
     }
@@ -266,10 +300,16 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
                           runSpacing: 8,
                           children: [
                             if (customer != null) ...[
+                              FilledButton.icon(
+                                onPressed: () => _viewPdf(contract, customer),
+                                icon: const Icon(Icons.visibility_outlined, size: 16),
+                                label: const Text('View PDF'),
+                                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                              ),
                               FilledButton.tonalIcon(
-                                onPressed: () => _generatePdf(contract, customer),
-                                icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
-                                label: const Text('Share PDF Agreement'),
+                                onPressed: () => _downloadPdf(contract, customer),
+                                icon: const Icon(Icons.download_rounded, size: 16),
+                                label: const Text('Download PDF'),
                               ),
                               OutlinedButton.icon(
                                 onPressed: () => _generateDocx(contract, customer),

@@ -10,6 +10,8 @@ import 'package:amc/data/models/service_visit.dart';
 import 'package:amc/providers/contract_provider.dart';
 import 'package:amc/providers/customer_provider.dart';
 import 'package:amc/providers/service_visit_provider.dart';
+import 'package:amc/providers/subscription_provider.dart';
+import '../subscription/subscription_screen.dart';
 
 class ServiceVisitFormScreen extends StatefulWidget {
   final String? preselectedContractId;
@@ -88,6 +90,42 @@ class _ServiceVisitFormScreenState extends State<ServiceVisitFormScreen> {
     if (_selectedCustomerId == null || _selectedContractId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select both a Customer and an AMC Contract')),
+      );
+      return;
+    }
+
+    final subProv = context.read<SubscriptionProvider>();
+    if (!subProv.canCreateRecords) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.workspace_premium, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('30-Day Trial Expired'),
+            ],
+          ),
+          content: const Text(
+            'Your 30-day evaluation trial has ended. To schedule new service visits, please subscribe to a plan or enter an activation license key.\n\nAll existing records and past service visit reports remain permanently safe and accessible.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                );
+              },
+              child: const Text('Subscribe Now'),
+            ),
+          ],
+        ),
       );
       return;
     }

@@ -11,6 +11,8 @@ import 'package:amc/data/services/reminder_service.dart';
 import 'package:amc/providers/contract_provider.dart';
 import 'package:amc/providers/customer_provider.dart';
 import 'package:amc/providers/settings_provider.dart';
+import 'package:amc/providers/subscription_provider.dart';
+import '../subscription/subscription_screen.dart';
 
 class ContractFormScreen extends StatefulWidget {
   final Contract? contract;
@@ -131,8 +133,45 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
     final contractProv = context.read<ContractProvider>();
     final customerProv = context.read<CustomerProvider>();
     final settingsProv = context.read<SettingsProvider>();
+    final subProv = context.read<SubscriptionProvider>();
 
     final isEditing = widget.contract != null;
+
+    if (!isEditing && !subProv.canCreateRecords) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.workspace_premium, color: AppColors.primary),
+              SizedBox(width: 8),
+              Text('30-Day Trial Expired'),
+            ],
+          ),
+          content: const Text(
+            'Your 30-day evaluation trial has ended. To create new AMC contracts, please subscribe to a plan or enter an activation license key.\n\nAll existing contracts, customer data, and documents remain permanently safe and accessible.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                );
+              },
+              child: const Text('Subscribe Now'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
     final contractId = widget.contract?.id ?? const Uuid().v4();
 
     final contract = Contract(

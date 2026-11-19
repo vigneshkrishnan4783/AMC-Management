@@ -1,6 +1,5 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 import 'package:amc/core/theme/app_colors.dart';
@@ -17,6 +16,7 @@ import 'package:amc/providers/customer_provider.dart';
 import 'package:amc/providers/document_provider.dart';
 import 'package:amc/providers/service_visit_provider.dart';
 import 'package:amc/providers/settings_provider.dart';
+import '../documents/pdf_viewer_screen.dart';
 import 'widgets/signature_pad_widget.dart';
 
 class ServiceVisitDetailScreen extends StatefulWidget {
@@ -89,32 +89,68 @@ class _ServiceVisitDetailScreenState extends State<ServiceVisitDetailScreen> {
     Navigator.pop(context);
   }
 
-  Future<void> _generatePdf(ServiceVisit visit, Customer customer, Contract contract) async {
+  void _viewPdf(ServiceVisit visit, Customer customer, Contract contract) {
+    final visitCode = visit.id.length >= 8 ? visit.id.substring(0, 8).toUpperCase() : visit.id;
+    final settings = context.read<SettingsProvider>().settings;
+    final docProv = context.read<DocumentProvider>();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PdfViewerScreen(
+          title: 'Service Report - $visitCode',
+          filename: 'ServiceReport_$visitCode.pdf',
+          pdfBytesBuilder: () async {
+            final bytes = await PdfService.generateServiceReportPdf(
+              visit: visit,
+              customer: customer,
+              contract: contract,
+              settings: settings,
+            );
+            await docProv.generateAndSaveVisitPdf(
+              visit: visit,
+              customer: customer,
+              contract: contract,
+              settings: settings,
+            );
+            return bytes;
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf(ServiceVisit visit, Customer customer, Contract contract) async {
     final docProv = context.read<DocumentProvider>();
     final settingsProv = context.read<SettingsProvider>();
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generating Service Visit Report PDF...')),
+      const SnackBar(content: Text('Preparing Service Report PDF download...')),
     );
 
     try {
-      final docRecord = await docProv.generateAndSaveVisitPdf(
+      final bytes = await PdfService.generateServiceReportPdf(
         visit: visit,
         customer: customer,
         contract: contract,
         settings: settingsProv.settings,
       );
 
-      if (!kIsWeb) {
-        final file = File(docRecord.filePath);
-        final bytes = await file.readAsBytes();
-        await PdfService.shareOrPrintPdf(bytes, 'ServiceReport_${visit.id.substring(0, 8)}.pdf');
-      }
+      await docProv.generateAndSaveVisitPdf(
+        visit: visit,
+        customer: customer,
+        contract: contract,
+        settings: settingsProv.settings,
+      );
+
+      final visitCode = visit.id.length >= 8 ? visit.id.substring(0, 8).toUpperCase() : visit.id;
+      final filename = 'ServiceReport_$visitCode.pdf';
+      await Printing.sharePdf(bytes: bytes, filename: filename);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Service Report saved to document history! (${docRecord.title})'),
+            content: Text('Service Report downloaded & saved: $filename'),
             backgroundColor: AppColors.statusActive,
           ),
         );
@@ -122,7 +158,7 @@ class _ServiceVisitDetailScreenState extends State<ServiceVisitDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error generating report: $e'), backgroundColor: AppColors.statusExpired),
+          SnackBar(content: Text('Error downloading report: $e'), backgroundColor: AppColors.statusExpired),
         );
       }
     }
@@ -305,10 +341,16 @@ class _ServiceVisitDetailScreenState extends State<ServiceVisitDetailScreen> {
                           runSpacing: 8,
                           children: [
                             if (customer != null && contract != null) ...[
+                              FilledButton.icon(
+                                onPressed: () => _viewPdf(visit, customer, contract),
+                                icon: const Icon(Icons.visibility_outlined, size: 16),
+                                label: const Text('View PDF'),
+                                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                              ),
                               FilledButton.tonalIcon(
-                                onPressed: () => _generatePdf(visit, customer, contract),
-                                icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
-                                label: const Text('Service Report PDF'),
+                                onPressed: () => _downloadPdf(visit, customer, contract),
+                                icon: const Icon(Icons.download_rounded, size: 16),
+                                label: const Text('Download PDF'),
                               ),
                               OutlinedButton.icon(
                                 onPressed: () => _generateDocx(visit, customer, contract),

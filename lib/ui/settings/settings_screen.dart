@@ -10,6 +10,10 @@ import 'package:amc/providers/document_provider.dart';
 import 'package:amc/providers/reminder_provider.dart';
 import 'package:amc/providers/service_visit_provider.dart';
 import 'package:amc/providers/settings_provider.dart';
+import 'package:amc/providers/subscription_provider.dart';
+import '../chatbot/amc_assistant_sheet.dart';
+import '../onboarding/onboarding_screen.dart';
+import '../subscription/subscription_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -194,6 +198,152 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
+
+                  // Subscription & 30-Day Evaluation Card
+                  Consumer<SubscriptionProvider>(
+                    builder: (context, subProv, _) {
+                      final isSub = subProv.isSubscribed;
+                      final days = subProv.daysRemaining;
+
+                      return Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSub ? AppColors.success.withOpacity(0.5) : AppColors.primary.withOpacity(0.4),
+                          ),
+                        ),
+                        color: isSub ? const Color(0xFFF0FDF4) : const Color(0xFFEFF6FF),
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isSub ? AppColors.success.withOpacity(0.15) : AppColors.primary.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isSub ? Icons.verified : Icons.workspace_premium_outlined,
+                                  color: isSub ? AppColors.success : AppColors.primary,
+                                  size: 26,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Text(
+                                          isSub ? 'Subscription: ${subProv.planName}' : 'Trial Status: $days Days Remaining',
+                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: isSub ? AppColors.success : AppColors.primary,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Text(
+                                            isSub ? 'ACTIVE' : '30-DAY TRIAL',
+                                            style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text(
+                                      'Existing records are always safe & permanently preserved. Subscribe or enter license key for new records.',
+                                      style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: isSub ? AppColors.success : AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                ),
+                                child: Text(isSub ? 'Manage License' : 'Upgrade Plan'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // User Guidelines Walkthrough & Assistant Card
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(18),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: AppColors.secondary.withOpacity(0.12),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(Icons.school_outlined, color: AppColors.secondary, size: 22),
+                          ),
+                          const SizedBox(width: 14),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('App Guidelines & Walkthrough', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Review the onboarding guide slides explaining contract tracking, e-signatures, and PDF export.',
+                                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const OnboardingScreen(isFromSettings: true),
+                                    ),
+                                  );
+                                },
+                                icon: const Icon(Icons.slideshow_outlined, size: 16),
+                                label: const Text('Guidelines'),
+                              ),
+                              FilledButton.icon(
+                                onPressed: () => AmcAssistantSheet.show(context),
+                                icon: const Icon(Icons.smart_toy_outlined, size: 16),
+                                label: const Text('Ask Assistant'),
+                                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Offline Backup & Restore Card
                   Card(
@@ -416,6 +566,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 36),
+
+                  // Powered by Citrus Informatics Branding Footer
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'AMC Manager v1.0.0 (Release Build)',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey[600]),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primary),
+                            const SizedBox(width: 4),
+                            Text(
+                              'App Powered by Citrus Informatics',
+                              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Developer Email: vignesh.krishnan@citrusinfomatics.com',
+                          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 ],
               ),

@@ -227,6 +227,19 @@ class PdfService {
   }
 
   /// Generate Service Visit Report PDF
+  static Future<Uint8List> generateServiceReportPdf({
+    required ServiceVisit visit,
+    required Customer customer,
+    required Contract contract,
+    required CompanySettings settings,
+  }) => generateServiceVisitPdf(
+    visit: visit,
+    customer: customer,
+    contract: contract,
+    settings: settings,
+  );
+
+  /// Generate Service Visit Report PDF
   static Future<Uint8List> generateServiceVisitPdf({
     required ServiceVisit visit,
     required Customer customer,

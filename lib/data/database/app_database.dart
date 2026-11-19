@@ -4,7 +4,6 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
-import 'package:uuid/uuid.dart';
 
 import '../models/customer.dart';
 import '../models/contract.dart';
@@ -78,255 +77,50 @@ class AppDatabase {
           Tables.settings,
           CompanySettings().toMap()..['id'] = 1,
         );
+      },
+      onOpen: (db) async {
+        try {
+          await db.execute('ALTER TABLE ${Tables.settings} ADD COLUMN powered_by TEXT DEFAULT "Citrus Informatics"');
+        } catch (_) {}
 
-        // Prepopulate demo data for small service business
-        await _seedSampleData(db);
+        // Purge any legacy sample data
+        try {
+          await db.delete(Tables.customers, where: 'email IN (?, ?, ?)', whereArgs: [
+            'admin@apexhospital.org',
+            'secretary@greenvalleyrwa.com',
+            'vikram@mehtalabs.in',
+          ]);
+          await db.delete(Tables.contracts, where: 'contract_number IN (?, ?, ?)', whereArgs: [
+            'AMC-2026-001',
+            'AMC-2026-002',
+            'AMC-2025-089',
+          ]);
+        } catch (_) {}
+
+        try {
+          final cur = await db.query(Tables.settings, where: 'id = 1');
+          if (cur.isNotEmpty) {
+            final email = cur.first['email'] as String?;
+            final phone = cur.first['phone'] as String?;
+            if (email == 'service@amcmanager.com' || phone == '+91 98765 43210') {
+              await db.update(
+                Tables.settings,
+                {
+                  'email': 'vignesh.krishnan@citrusinfomatics.com',
+                  'phone': '',
+                  'address': '',
+                  'website': '',
+                  'tax_number': '',
+                  'business_name': 'AMC Management',
+                  'powered_by': 'Citrus Informatics',
+                },
+                where: 'id = 1',
+              );
+            }
+          }
+        } catch (_) {}
       },
     );
-  }
-
-  Future<void> _seedSampleData(Database db) async {
-    const uuid = Uuid();
-    final now = DateTime.now();
-
-    // 1. Customers
-    final c1 = Customer(
-      id: uuid.v4(),
-      name: 'Dr. Ramesh Sharma',
-      company: 'Apex Multi-speciality Hospital',
-      phone: '+91 98450 11223',
-      email: 'admin@apexhospital.org',
-      address: 'Suite 401, Health City, Ring Road, Bangalore',
-      notes: 'Critical medical equipment AMC - 24/7 priority support.',
-      createdAt: now.subtract(const Duration(days: 90)),
-    );
-
-    final c2 = Customer(
-      id: uuid.v4(),
-      name: 'Priya Narayanan',
-      company: 'Green Valley Apartments RWA',
-      phone: '+91 98860 33445',
-      email: 'secretary@greenvalleyrwa.com',
-      address: 'Green Valley Enclave, Sarjapur Road, Bangalore',
-      notes: 'Water treatment and diesel generator maintenance.',
-      createdAt: now.subtract(const Duration(days: 120)),
-    );
-
-    final c3 = Customer(
-      id: uuid.v4(),
-      name: 'Vikram Mehta',
-      company: 'Mehta Diagnostics & Lab',
-      phone: '+91 97410 55667',
-      email: 'vikram@mehtalabs.in',
-      address: '14/B Commercial Complex, Indiranagar, Bangalore',
-      notes: 'HVAC and precision temperature cooling units.',
-      createdAt: now.subtract(const Duration(days: 60)),
-    );
-
-    for (final c in [c1, c2, c3]) {
-      await db.insert(Tables.customers, c.toMap());
-    }
-
-    // 2. Contracts
-    // Contract 1: Active (ends in 180 days)
-    final ct1 = Contract(
-      id: uuid.v4(),
-      contractNumber: 'AMC-2026-001',
-      title: 'Full Comprehensive Medical HVAC Maintenance',
-      customerId: c1.id,
-      startDate: now.subtract(const Duration(days: 90)),
-      endDate: now.add(const Duration(days: 275)),
-      contractValue: 125000.0,
-      paymentStatus: 'Paid',
-      frequency: 'Monthly',
-      termsAndConditions: 'Covers all compressor checks, filter replacements, and bi-weekly sensor calibration.',
-      status: 'active',
-      createdAt: now.subtract(const Duration(days: 90)),
-    );
-
-    // Contract 2: Expiring Soon (ends in 14 days!)
-    final ct2 = Contract(
-      id: uuid.v4(),
-      contractNumber: 'AMC-2026-002',
-      title: 'DG Set & Water Treatment Plant AMC',
-      customerId: c2.id,
-      startDate: now.subtract(const Duration(days: 351)),
-      endDate: now.add(const Duration(days: 14)), // Expiring soon!
-      contractValue: 78000.0,
-      paymentStatus: 'Paid',
-      frequency: 'Quarterly',
-      termsAndConditions: 'Includes oil testing, fuel filter cleanup, and 4 quarterly scheduled services.',
-      status: 'expiring_soon',
-      createdAt: now.subtract(const Duration(days: 351)),
-    );
-
-    // Contract 3: Overdue / Expired (ended 5 days ago)
-    final ct3 = Contract(
-      id: uuid.v4(),
-      contractNumber: 'AMC-2025-089',
-      title: 'Precision Cooling & Backup UPS Contract',
-      customerId: c3.id,
-      startDate: now.subtract(const Duration(days: 370)),
-      endDate: now.subtract(const Duration(days: 5)), // Expired!
-      contractValue: 54000.0,
-      paymentStatus: 'Partial',
-      frequency: 'Bi-Annual',
-      termsAndConditions: 'Semi-annual deep inspection and battery impedance check.',
-      status: 'expired',
-      createdAt: now.subtract(const Duration(days: 370)),
-    );
-
-    for (final ct in [ct1, ct2, ct3]) {
-      await db.insert(Tables.contracts, ct.toMap());
-    }
-
-    // 3. Equipment
-    final eq1 = Equipment(
-      id: uuid.v4(),
-      contractId: ct1.id,
-      customerId: c1.id,
-      name: 'Daikin VRV IV Air Handling Unit',
-      brand: 'Daikin',
-      modelNumber: 'RXYQ16U',
-      serialNumber: 'DK-2023-88912',
-      location: 'Block A, Rooftop Plant Room',
-      installationDate: now.subtract(const Duration(days: 500)),
-      notes: 'Clean filters every service visit.',
-    );
-
-    final eq2 = Equipment(
-      id: uuid.v4(),
-      contractId: ct2.id,
-      customerId: c2.id,
-      name: 'Kirloskar 125 kVA Silent DG Set',
-      brand: 'Kirloskar',
-      modelNumber: 'KG125WS',
-      serialNumber: 'KIR-90214-G',
-      location: 'Basement Generator Yard',
-      installationDate: now.subtract(const Duration(days: 720)),
-      notes: 'Next service: fuel strainer and battery electrolyte check.',
-    );
-
-    final eq3 = Equipment(
-      id: uuid.v4(),
-      contractId: ct3.id,
-      customerId: c3.id,
-      name: 'Vertiv Liebert Precision PAC 10kW',
-      brand: 'Vertiv Liebert',
-      modelNumber: 'PEX3-035',
-      serialNumber: 'VL-774102-P',
-      location: 'Server Room 2',
-      installationDate: now.subtract(const Duration(days: 400)),
-      notes: 'Requires replacement of condenser fan capacitor.',
-    );
-
-    for (final eq in [eq1, eq2, eq3]) {
-      await db.insert(Tables.equipment, eq.toMap());
-    }
-
-    // 4. Service Visits
-    // Visit 1: Scheduled for today / upcoming
-    final sv1 = ServiceVisit(
-      id: uuid.v4(),
-      contractId: ct1.id,
-      customerId: c1.id,
-      scheduledDate: now.add(const Duration(hours: 4)),
-      technicianName: 'Suresh Kumar',
-      status: 'scheduled',
-      workDoneNotes: 'Scheduled routine monthly inspection for Daikin AHU.',
-    );
-
-    // Visit 2: Completed visit with checklist and parts replaced
-    final sv2 = ServiceVisit(
-      id: uuid.v4(),
-      contractId: ct2.id,
-      customerId: c2.id,
-      scheduledDate: now.subtract(const Duration(days: 15)),
-      visitDate: now.subtract(const Duration(days: 15)),
-      technicianName: 'Anil Verma',
-      status: 'completed',
-      workDoneNotes: 'Complete quarterly maintenance performed. Replaced primary fuel filter, checked radiator coolant and terminal torque.',
-      completedAt: now.subtract(const Duration(days: 15)),
-    );
-
-    for (final sv in [sv1, sv2]) {
-      await db.insert(Tables.serviceVisits, sv.toMap());
-    }
-
-    // Checklist for sv1
-    final cl1 = [
-      ChecklistItem(id: uuid.v4(), visitId: sv1.id, taskDescription: 'Inspect compressor suction and discharge pressure', isDone: false),
-      ChecklistItem(id: uuid.v4(), visitId: sv1.id, taskDescription: 'Clean electrostatic air filters and evaporator coils', isDone: false),
-      ChecklistItem(id: uuid.v4(), visitId: sv1.id, taskDescription: 'Verify thermostat temperature sensing calibration', isDone: false),
-      ChecklistItem(id: uuid.v4(), visitId: sv1.id, taskDescription: 'Check motor blower bearing lubrication', isDone: false),
-    ];
-    for (final item in cl1) {
-      await db.insert(Tables.checklistItems, item.toMap());
-    }
-
-    // Checklist for sv2
-    final cl2 = [
-      ChecklistItem(id: uuid.v4(), visitId: sv2.id, taskDescription: 'Inspect engine lube oil level & viscosity', isDone: true),
-      ChecklistItem(id: uuid.v4(), visitId: sv2.id, taskDescription: 'Check fuel pipeline for leaks and clean sediment bowl', isDone: true),
-      ChecklistItem(id: uuid.v4(), visitId: sv2.id, taskDescription: 'Measure battery charging voltage (min 26V)', isDone: true),
-      ChecklistItem(id: uuid.v4(), visitId: sv2.id, taskDescription: 'Test automatic mains failure (AMF) transfer panel', isDone: true),
-    ];
-    for (final item in cl2) {
-      await db.insert(Tables.checklistItems, item.toMap());
-    }
-
-    // Parts for sv2
-    final p1 = PartReplaced(
-      id: uuid.v4(),
-      visitId: sv2.id,
-      partName: 'Fleetguard Primary Fuel Filter Element',
-      partNumber: 'FF-5052',
-      quantity: 1,
-      unitCost: 1450.0,
-      notes: 'OEM replacement installed.',
-    );
-    final p2 = PartReplaced(
-      id: uuid.v4(),
-      visitId: sv2.id,
-      partName: 'Castrol Heavy Duty Engine Oil (15W-40)',
-      partNumber: 'ENG-OIL-15L',
-      quantity: 15,
-      unitCost: 320.0,
-      notes: 'Fresh oil top-up.',
-    );
-    for (final p in [p1, p2]) {
-      await db.insert(Tables.partsReplaced, p.toMap());
-    }
-
-    // 5. Reminders
-    final r1 = Reminder(
-      id: uuid.v4(),
-      contractId: ct2.id,
-      customerId: c2.id,
-      triggerDaysBefore: 14,
-      scheduledDate: now,
-      isSent: false,
-      reminderType: 'email',
-      recipientEmail: c2.email,
-      notes: 'Renewal reminder: Contract expires in 14 days.',
-    );
-
-    final r2 = Reminder(
-      id: uuid.v4(),
-      contractId: ct3.id,
-      customerId: c3.id,
-      triggerDaysBefore: 1,
-      scheduledDate: now.subtract(const Duration(days: 5)),
-      isSent: true,
-      sentAt: now.subtract(const Duration(days: 5)),
-      reminderType: 'email',
-      recipientEmail: c3.email,
-      notes: 'Final renewal reminder sent. Awaiting customer confirmation.',
-    );
-
-    for (final r in [r1, r2]) {
-      await db.insert(Tables.reminders, r.toMap());
-    }
   }
 
   // --- CRUD: Customers ---
