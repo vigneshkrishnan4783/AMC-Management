@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
@@ -272,16 +272,19 @@ class DocxService {
     required String title,
     required String filename,
   }) async {
-    final docsDir = await getApplicationDocumentsDirectory();
-    final amcDocsFolder = Directory('${docsDir.path}/AMC_Documents');
-    if (!await amcDocsFolder.exists()) {
-      await amcDocsFolder.create(recursive: true);
-    }
+    String filePath = filename;
+    if (!kIsWeb) {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final amcDocsFolder = Directory('${docsDir.path}/AMC_Documents');
+      if (!await amcDocsFolder.exists()) {
+        await amcDocsFolder.create(recursive: true);
+      }
 
-    final safeFilename = filename.replaceAll(RegExp(r'[^\w\.-]'), '_');
-    final filePath = '${amcDocsFolder.path}/$safeFilename';
-    final file = File(filePath);
-    await file.writeAsBytes(bytes, flush: true);
+      final safeFilename = filename.replaceAll(RegExp(r'[^\w\.-]'), '_');
+      filePath = '${amcDocsFolder.path}/$safeFilename';
+      final file = File(filePath);
+      await file.writeAsBytes(bytes, flush: true);
+    }
 
     return DocumentRecord(
       id: const Uuid().v4(),

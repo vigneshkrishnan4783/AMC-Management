@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:archive/archive.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -19,15 +20,17 @@ class BackupService {
     archive.addFile(ArchiveFile('database_dump.json', jsonBytes.length, jsonBytes));
 
     // Also include generated documents if any
-    final docsDir = await getApplicationDocumentsDirectory();
-    final amcDocsFolder = Directory('${docsDir.path}/AMC_Documents');
-    if (await amcDocsFolder.exists()) {
-      final files = amcDocsFolder.listSync();
-      for (final f in files) {
-        if (f is File) {
-          final filename = f.path.split(Platform.pathSeparator).last;
-          final bytes = await f.readAsBytes();
-          archive.addFile(ArchiveFile('documents/$filename', bytes.length, bytes));
+    if (!kIsWeb) {
+      final docsDir = await getApplicationDocumentsDirectory();
+      final amcDocsFolder = Directory('${docsDir.path}/AMC_Documents');
+      if (await amcDocsFolder.exists()) {
+        final files = amcDocsFolder.listSync();
+        for (final f in files) {
+          if (f is File) {
+            final filename = f.path.split(Platform.pathSeparator).last;
+            final bytes = await f.readAsBytes();
+            archive.addFile(ArchiveFile('documents/$filename', bytes.length, bytes));
+          }
         }
       }
     }
@@ -37,11 +40,13 @@ class BackupService {
     final dateStr = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final backupFileName = 'amc_manager_backup_$dateStr.amcbak';
 
-    final tempDir = await getTemporaryDirectory();
-    final backupFile = File('${tempDir.path}/$backupFileName');
-    await backupFile.writeAsBytes(zipData, flush: true);
-
-    return backupFile.path;
+    if (!kIsWeb) {
+      final tempDir = await getTemporaryDirectory();
+      final backupFile = File('${tempDir.path}/$backupFileName');
+      await backupFile.writeAsBytes(zipData, flush: true);
+      return backupFile.path;
+    }
+    return backupFileName;
   }
 
   /// Share or save backup file

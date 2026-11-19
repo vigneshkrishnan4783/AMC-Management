@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:provider/provider.dart';
@@ -28,31 +29,33 @@ class _DocumentsHistoryScreenState extends State<DocumentsHistoryScreen> {
   }
 
   Future<void> _openOrShareDocument(DocumentRecord doc) async {
-    final file = File(doc.filePath);
-    if (!await file.exists()) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('File not found on device storage.'), backgroundColor: AppColors.statusExpired),
+    if (!kIsWeb) {
+      final file = File(doc.filePath);
+      if (!await file.exists()) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('File not found on device storage.'), backgroundColor: AppColors.statusExpired),
+          );
+        }
+        return;
+      }
+
+      final bytes = await file.readAsBytes();
+
+      if (doc.documentType == 'pdf') {
+        await Printing.layoutPdf(
+          onLayout: (_) => bytes,
+          name: doc.title,
+        );
+      } else {
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(doc.filePath)],
+            subject: doc.title,
+            text: 'Document: ${doc.title}',
+          ),
         );
       }
-      return;
-    }
-
-    final bytes = await file.readAsBytes();
-
-    if (doc.documentType == 'pdf') {
-      await Printing.layoutPdf(
-        onLayout: (_) => bytes,
-        name: doc.title,
-      );
-    } else {
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(doc.filePath)],
-          subject: doc.title,
-          text: 'Document: ${doc.title}',
-        ),
-      );
     }
   }
 

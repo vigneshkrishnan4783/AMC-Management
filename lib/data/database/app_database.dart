@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/customer.dart';
@@ -29,7 +30,9 @@ class AppDatabase {
   }
 
   static void initializePlatform() {
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (kIsWeb) {
+      databaseFactory = databaseFactoryFfiWeb;
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
@@ -39,7 +42,9 @@ class AppDatabase {
     initializePlatform();
 
     String path;
-    if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
+    if (kIsWeb) {
+      path = 'amc_manager.db';
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       final appDocDir = await getApplicationDocumentsDirectory();
       final dbFolder = Directory(p.join(appDocDir.path, 'AMCManager'));
       if (!await dbFolder.exists()) {

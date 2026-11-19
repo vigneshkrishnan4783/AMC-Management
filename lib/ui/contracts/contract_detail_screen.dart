@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:amc/core/theme/app_colors.dart';
@@ -66,9 +67,11 @@ class _ContractDetailScreenState extends State<ContractDetailScreen> {
         settings: settingsProv.settings,
       );
 
-      final file = File(docRecord.filePath);
-      final bytes = await file.readAsBytes();
-      await PdfService.shareOrPrintPdf(bytes, '${contract.contractNumber}_Agreement.pdf');
+      if (!kIsWeb) {
+        final file = File(docRecord.filePath);
+        final bytes = await file.readAsBytes();
+        await PdfService.shareOrPrintPdf(bytes, '${contract.contractNumber}_Agreement.pdf');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

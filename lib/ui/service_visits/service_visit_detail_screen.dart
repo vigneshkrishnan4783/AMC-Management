@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
@@ -104,9 +105,11 @@ class _ServiceVisitDetailScreenState extends State<ServiceVisitDetailScreen> {
         settings: settingsProv.settings,
       );
 
-      final file = File(docRecord.filePath);
-      final bytes = await file.readAsBytes();
-      await PdfService.shareOrPrintPdf(bytes, 'ServiceReport_${visit.id.substring(0, 8)}.pdf');
+      if (!kIsWeb) {
+        final file = File(docRecord.filePath);
+        final bytes = await file.readAsBytes();
+        await PdfService.shareOrPrintPdf(bytes, 'ServiceReport_${visit.id.substring(0, 8)}.pdf');
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
