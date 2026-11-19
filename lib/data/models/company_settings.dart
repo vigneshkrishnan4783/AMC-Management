@@ -1,0 +1,93 @@
+class CompanySettings {
+  final String businessName;
+  final String phone;
+  final String email;
+  final String address;
+  final String? website;
+  final String? taxNumber; // GST / VAT / Tax ID
+  final String currencySymbol;
+  final String? termsTemplate;
+  final bool emailNotificationsEnabled;
+  final String reminderDaysConfig; // Comma separated, e.g. "30,7,1"
+
+  CompanySettings({
+    this.businessName = 'AMC Services Pvt Ltd',
+    this.phone = '+91 98765 43210',
+    this.email = 'service@amcmanager.com',
+    this.address = '101 Tech Business Park, Bangalore, India',
+    this.website = 'www.amcmanager.com',
+    this.taxNumber = 'GSTIN: 29AAAAA0000A1Z5',
+    this.currencySymbol = '₹',
+    this.termsTemplate = '1. Regular preventative maintenance as per agreed schedule.\n2. Replacement of consumable parts will be charged separately unless covered under comprehensive AMC.\n3. Emergency breakdown calls attended within 24 business hours.',
+    this.emailNotificationsEnabled = true,
+    this.reminderDaysConfig = '30,7,1',
+  });
+
+  List<int> get reminderDays {
+    return reminderDaysConfig
+        .split(',')
+        .map((s) => int.tryParse(s.trim()) ?? 0)
+        .where((d) => d > 0)
+        .toList();
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'business_name': businessName,
+      'phone': phone,
+      'email': email,
+      'address': address,
+      'website': website,
+      'tax_number': taxNumber,
+      'currency_symbol': currencySymbol,
+      'terms_template': termsTemplate,
+      'email_notifications_enabled': emailNotificationsEnabled ? 1 : 0,
+      'reminder_days_config': reminderDaysConfig,
+    };
+  }
+
+  factory CompanySettings.fromMap(Map<String, dynamic> map) {
+    return CompanySettings(
+      businessName: map['business_name'] as String? ?? 'AMC Services Pvt Ltd',
+      phone: map['phone'] as String? ?? '+91 98765 43210',
+      email: map['email'] as String? ?? 'service@amcmanager.com',
+      address: map['address'] as String? ?? '101 Tech Business Park, Bangalore, India',
+      website: map['website'] as String? ?? 'www.amcmanager.com',
+      taxNumber: map['tax_number'] as String? ?? 'GSTIN: 29AAAAA0000A1Z5',
+      currencySymbol: map['currency_symbol'] as String? ?? '₹',
+      termsTemplate: map['terms_template'] as String? ??
+          '1. Regular preventative maintenance as per agreed schedule.\n2. Replacement of consumable parts will be charged separately.\n3. Emergency breakdown calls attended within 24 hours.',
+      emailNotificationsEnabled:
+          (map['email_notifications_enabled'] as int? ?? 1) == 1,
+      reminderDaysConfig:
+          map['reminder_days_config'] as String? ?? '30,7,1',
+    );
+  }
+
+  CompanySettings copyWith({
+    String? businessName,
+    String? phone,
+    String? email,
+    String? address,
+    String? website,
+    String? taxNumber,
+    String? currencySymbol,
+    String? termsTemplate,
+    bool? emailNotificationsEnabled,
+    String? reminderDaysConfig,
+  }) {
+    return CompanySettings(
+      businessName: businessName ?? this.businessName,
+      phone: phone ?? this.phone,
+      email: email ?? this.email,
+      address: address ?? this.address,
+      website: website ?? this.website,
+      taxNumber: taxNumber ?? this.taxNumber,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      termsTemplate: termsTemplate ?? this.termsTemplate,
+      emailNotificationsEnabled:
+          emailNotificationsEnabled ?? this.emailNotificationsEnabled,
+      reminderDaysConfig: reminderDaysConfig ?? this.reminderDaysConfig,
+    );
+  }
+}

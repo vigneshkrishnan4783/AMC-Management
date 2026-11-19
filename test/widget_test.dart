@@ -1,30 +1,38 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
-import 'package:amc/main.dart';
+import 'package:amc/data/models/contract.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  test('Contract daysUntilExpiry and status calculation test', () {
+    final now = DateTime.now();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    // Active contract (ends in 100 days)
+    final activeContract = Contract(
+      id: '1',
+      contractNumber: 'AMC-001',
+      title: 'AC Maintenance',
+      customerId: 'cust-1',
+      startDate: now.subtract(const Duration(days: 30)),
+      endDate: now.add(const Duration(days: 100)),
+      contractValue: 50000,
+      paymentStatus: 'Paid',
+      frequency: 'Quarterly',
+      status: 'active',
+      createdAt: now,
+    );
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(activeContract.daysUntilExpiry, inInclusiveRange(99, 101));
+    expect(activeContract.computedStatus, 'active');
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Expiring soon contract (ends in 15 days)
+    final expiringContract = activeContract.copyWith(
+      endDate: now.add(const Duration(days: 15)),
+    );
+    expect(expiringContract.computedStatus, 'expiring_soon');
+
+    // Expired contract (ended 5 days ago)
+    final expiredContract = activeContract.copyWith(
+      endDate: now.subtract(const Duration(days: 5)),
+    );
+    expect(expiredContract.computedStatus, 'expired');
   });
 }
