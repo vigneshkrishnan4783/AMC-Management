@@ -48,7 +48,7 @@ void main() {
     expect(settings.phone, ''); // No hardcoded fake phone
     expect(settings.address, ''); // No hardcoded fake address
     expect(settings.businessName, ''); // No hardcoded fake business name
-    expect(settings.poweredBy, 'Citrus Informatics');
+    expect(settings.poweredBy, 'ZtoH Software');
   });
 
   test('Formatters maskPhoneNumber hides digits with XXXXX', () {
@@ -57,7 +57,7 @@ void main() {
     expect(Formatters.maskPhoneNumber(''), '');
   });
 
-  test('SubscriptionProvider initializes 30-day trial and activates license keys', () async {
+  test('SubscriptionProvider initializes 30-day trial and activates plans', () async {
     SharedPreferences.setMockInitialValues({});
     final subProv = SubscriptionProvider();
     await subProv.init();
@@ -67,10 +67,10 @@ void main() {
     expect(subProv.daysRemaining, inInclusiveRange(29, 30));
     expect(subProv.canCreateRecords, true);
 
-    // Test license key activation
-    final activated = await subProv.activateLicenseKey('CITRUS-2026-VIP');
-    expect(activated, true);
+    // Test subscribing to Monthly Plan (₹300/mo)
+    await subProv.subscribeToPlan('Monthly Subscription');
     expect(subProv.isSubscribed, true);
     expect(subProv.canCreateRecords, true);
+    expect(subProv.planName, 'Monthly Subscription');
   });
 }

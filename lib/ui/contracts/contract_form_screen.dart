@@ -149,7 +149,7 @@ class _ContractFormScreenState extends State<ContractFormScreen> {
             ],
           ),
           content: const Text(
-            'Your 30-day evaluation trial has ended. To create new AMC contracts, please subscribe to a plan or enter an activation license key.\n\nAll existing contracts, customer data, and documents remain permanently safe and accessible.',
+            'Your 30-day evaluation trial has ended. To create new AMC contracts, please subscribe to a plan (starting at ₹300/mo).\n\nAll existing contracts, customer data, and documents remain permanently safe and accessible.',
           ),
           actions: [
             TextButton(

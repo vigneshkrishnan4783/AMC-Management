@@ -20,7 +20,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.citrusinformatics.amcmanager"
+        applicationId = "com.ztohsoftware.amcmanager"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = 1

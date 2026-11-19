@@ -12,63 +12,6 @@ class SubscriptionScreen extends StatefulWidget {
 }
 
 class _SubscriptionScreenState extends State<SubscriptionScreen> {
-  final TextEditingController _licenseController = TextEditingController();
-  bool _isActivating = false;
-  String? _activationError;
-
-  @override
-  void dispose() {
-    _licenseController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handleActivateLicense() async {
-    final subProv = context.read<SubscriptionProvider>();
-    final key = _licenseController.text.trim();
-
-    if (key.isEmpty) {
-      setState(() => _activationError = 'Please enter a valid license key.');
-      return;
-    }
-
-    setState(() {
-      _isActivating = true;
-      _activationError = null;
-    });
-
-    final success = await subProv.activateLicenseKey(key);
-
-    setState(() => _isActivating = false);
-
-    if (mounted) {
-      if (success) {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.verified, color: AppColors.success, size: 28),
-                SizedBox(width: 8),
-                Text('License Activated!'),
-              ],
-            ),
-            content: Text(
-              'Thank you! Your license ($key) has been successfully activated. You have full unlimited access to AMC Manager.',
-            ),
-            actions: [
-              ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: const Text('Awesome'),
-              ),
-            ],
-          ),
-        );
-      } else {
-        setState(() => _activationError = 'Invalid license key. Keys must start with AMC- or CITRUS-.');
-      }
-    }
-  }
-
   void _handleSelectPlan(String planTitle, String price) {
     showDialog(
       context: context,
@@ -259,51 +202,51 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Plan 1: Starter Monthly
+            // Plan 1: Monthly Plan (₹300/mo)
             _buildPlanCard(
-              title: 'Starter Monthly',
-              price: '₹499',
+              title: 'Monthly Subscription',
+              price: '₹300',
               period: '/ month',
-              description: 'Ideal for independent technicians and small service setups.',
+              description: 'Affordable monthly plan for independent technicians and contractors.',
               features: const [
-                'Up to 50 active contracts',
+                'Unlimited active contracts',
                 'Mobile customer e-signature capture',
                 'PDF & Word contract generation',
                 'Automated renewal reminder emails',
                 'Local SQLite offline storage',
               ],
               isPopular: false,
-              onSelect: () => _handleSelectPlan('Starter Monthly', '₹499 / month'),
+              onSelect: () => _handleSelectPlan('Monthly Subscription', '₹300 / month'),
             ),
 
             const SizedBox(height: 16),
 
-            // Plan 2: Professional Annual (Popular)
+            // Plan 2: Annual Plan (Popular)
             _buildPlanCard(
-              title: 'Professional Annual',
-              price: '₹3,999',
-              period: '/ year (Save 33%)',
-              description: 'Best for growing AMC and facility maintenance businesses.',
+              title: 'Annual Subscription',
+              price: '₹2,500',
+              period: '/ year (Save 30%)',
+              description: 'Best value for growing AMC and facility maintenance businesses.',
               features: const [
                 'Unlimited contracts & customers',
                 'Comprehensive equipment tracking',
                 'Full preventative maintenance checklists',
                 'Priority automated email notifications',
                 'Branded PDF agreements & service reports',
-                'Priority customer support',
+                'Standard email support',
               ],
               isPopular: true,
-              onSelect: () => _handleSelectPlan('Professional Annual', '₹3,999 / year'),
+              onSelect: () => _handleSelectPlan('Annual Subscription', '₹2,500 / year'),
             ),
 
             const SizedBox(height: 16),
 
-            // Plan 3: Lifetime Enterprise
+            // Plan 3: Lifetime Access
             _buildPlanCard(
-              title: 'Lifetime Enterprise',
-              price: '₹9,999',
+              title: 'Lifetime Access',
+              price: '₹5,999',
               period: 'one-time',
-              description: 'Perpetual license with no monthly or annual renewal fees.',
+              description: 'One-time payment with no recurring subscription fees.',
               features: const [
                 'Unlimited lifetime contracts & visits',
                 'No recurring subscription fees ever',
@@ -312,54 +255,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                 'All future software updates included',
               ],
               isPopular: false,
-              onSelect: () => _handleSelectPlan('Lifetime Enterprise', '₹9,999 one-time'),
-            ),
-
-            const SizedBox(height: 32),
-
-            // License Key Activation Section
-            Text(
-              'Activate with License Key',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'If you received a key from Citrus Informatics or an authorized distributor, enter it here:',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 12),
-
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _licenseController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g. CITRUS-2026-PRO or AMC-XXXX',
-                      errorText: _activationError,
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: _isActivating ? null : _handleActivateLicense,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
-                  child: _isActivating
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text('Activate', style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
+              onSelect: () => _handleSelectPlan('Lifetime Access', '₹5,999 one-time'),
             ),
 
             const SizedBox(height: 36),

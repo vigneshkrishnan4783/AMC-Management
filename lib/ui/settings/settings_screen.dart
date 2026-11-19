@@ -12,7 +12,6 @@ import 'package:amc/providers/reminder_provider.dart';
 import 'package:amc/providers/service_visit_provider.dart';
 import 'package:amc/providers/settings_provider.dart';
 import 'package:amc/providers/subscription_provider.dart';
-import '../chatbot/amc_assistant_sheet.dart';
 import '../onboarding/onboarding_screen.dart';
 import '../subscription/subscription_screen.dart';
 
@@ -311,7 +310,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                     ),
                                     const SizedBox(height: 4),
                                     const Text(
-                                      'Existing records are always safe & permanently preserved. Subscribe or enter license key for new records.',
+                                      'Existing records are always safe & permanently preserved. Subscribe starting at ₹300/mo for unlimited new records.',
                                       style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
                                     ),
                                   ],
@@ -330,7 +329,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   foregroundColor: Colors.white,
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
-                                child: Text(isSub ? 'Manage License' : 'Upgrade Plan'),
+                                child: Text(isSub ? 'Active Plan' : 'Subscribe'),
                               ),
                             ],
                           ),
@@ -340,7 +339,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // User Guidelines Walkthrough & Assistant Card
+                  // User Guidelines Walkthrough Card
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(18),
@@ -369,29 +368,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            children: [
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const OnboardingScreen(isFromSettings: true),
-                                    ),
-                                  );
-                                },
-                                icon: const Icon(Icons.slideshow_outlined, size: 16),
-                                label: const Text('Guidelines'),
-                              ),
-                              FilledButton.icon(
-                                onPressed: () => AmcAssistantSheet.show(context),
-                                icon: const Icon(Icons.smart_toy_outlined, size: 16),
-                                label: const Text('Ask Assistant'),
-                                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-                              ),
-                            ],
+                          OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const OnboardingScreen(isFromSettings: true),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.slideshow_outlined, size: 16),
+                            label: const Text('Guidelines'),
                           ),
                         ],
                       ),
@@ -696,7 +683,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const SizedBox(height: 36),
 
-                  // Powered by Citrus Informatics Branding Footer
+                  // Powered by ZtoH Software Branding Footer
                   Center(
                     child: Column(
                       children: [
@@ -711,14 +698,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const Icon(Icons.bolt_rounded, size: 16, color: AppColors.primary),
                             const SizedBox(width: 4),
                             Text(
-                              'App Powered by Citrus Informatics',
+                              'App Powered by ZtoH Software',
                               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey[700]),
                             ),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Developer Email: vignesh.krishnan@citrusinfomatics.com',
+                          'Support Email: vigneshkrishnan4786@gmail.com',
                           style: TextStyle(fontSize: 11, color: Colors.grey[500]),
                         ),
                         const SizedBox(height: 16),

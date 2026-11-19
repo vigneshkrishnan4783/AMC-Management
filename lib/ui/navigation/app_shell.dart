@@ -6,7 +6,6 @@ import '../../providers/contract_provider.dart';
 import '../../providers/service_visit_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/subscription_provider.dart';
-import '../chatbot/amc_assistant_sheet.dart';
 import '../contracts/contracts_screen.dart';
 import '../customers/customers_screen.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -60,13 +59,7 @@ class _AppShellState extends State<AppShell> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: () => AmcAssistantSheet.show(context),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.smart_toy_outlined),
-          label: const Text('AMC Assistant'),
-        ),
+
       );
     }
 
@@ -96,19 +89,7 @@ class _AppShellState extends State<AppShell> {
                   ),
                 ),
               ),
-              trailing: Expanded(
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: IconButton(
-                      icon: const Icon(Icons.support_agent_rounded, color: AppColors.primary),
-                      tooltip: 'Help Assistant',
-                      onPressed: () => AmcAssistantSheet.show(context),
-                    ),
-                  ),
-                ),
-              ),
+
               destinations: [
                 const NavigationRailDestination(
                   icon: Icon(Icons.dashboard_outlined),
@@ -161,13 +142,7 @@ class _AppShellState extends State<AppShell> {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton(
-          onPressed: () => AmcAssistantSheet.show(context),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          tooltip: 'AMC Assistant',
-          child: const Icon(Icons.smart_toy_outlined),
-        ),
+
       );
     }
 
@@ -238,11 +213,7 @@ class _AppShellState extends State<AppShell> {
               ),
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.support_agent_rounded, color: AppColors.primary),
-            tooltip: 'AMC Help Assistant',
-            onPressed: () => AmcAssistantSheet.show(context),
-          ),
+
           IconButton(
             icon: Icon(settingsProv.themeMode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
             onPressed: () => settingsProv.toggleTheme(),
@@ -299,13 +270,7 @@ class _AppShellState extends State<AppShell> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => AmcAssistantSheet.show(context),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        tooltip: 'AMC Smart Assistant',
-        child: const Icon(Icons.smart_toy_outlined),
-      ),
+
     );
   }
 
@@ -441,13 +406,7 @@ class _AppShellState extends State<AppShell> {
                 _buildSidebarItem(4, Icons.notifications_none, Icons.notifications, 'Renewal Reminders'),
                 _buildSidebarItem(5, Icons.folder_outlined, Icons.folder, 'Document History'),
                 _buildSidebarItem(6, Icons.settings_outlined, Icons.settings, 'Settings & Backup'),
-                const Divider(height: 20),
-                ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.support_agent_rounded, color: AppColors.primary, size: 20),
-                  title: const Text('AMC Assistant', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
-                  onTap: () => AmcAssistantSheet.show(context),
-                ),
+
               ],
             ),
           ),

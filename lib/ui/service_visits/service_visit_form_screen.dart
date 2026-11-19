@@ -107,7 +107,7 @@ class _ServiceVisitFormScreenState extends State<ServiceVisitFormScreen> {
             ],
           ),
           content: const Text(
-            'Your 30-day evaluation trial has ended. To schedule new service visits, please subscribe to a plan or enter an activation license key.\n\nAll existing records and past service visit reports remain permanently safe and accessible.',
+            'Your 30-day evaluation trial has ended. To schedule new service visits, please subscribe to a plan (starting at ₹300/mo).\n\nAll existing records and past service visit reports remain permanently safe and accessible.',
           ),
           actions: [
             TextButton(

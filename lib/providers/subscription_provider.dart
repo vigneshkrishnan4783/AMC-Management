@@ -57,8 +57,8 @@ class SubscriptionProvider extends ChangeNotifier {
     final trimmed = key.trim().toUpperCase();
     if (trimmed.isEmpty) return false;
 
-    // Accepts format: AMC-PRO-*, CITRUS-*, or any 8+ character valid key
-    if (trimmed.startsWith('AMC-') || trimmed.startsWith('CITRUS-') || trimmed.length >= 8) {
+    // Accepts format: AMC-PRO-*, ZTOH-*, or any 8+ character valid key
+    if (trimmed.startsWith('AMC-') || trimmed.startsWith('ZTOH-') || trimmed.length >= 8) {
       final prefs = await SharedPreferences.getInstance();
       _isSubscribed = true;
       _planName = 'Enterprise License (Active)';

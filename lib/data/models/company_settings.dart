@@ -22,7 +22,7 @@ class CompanySettings {
     this.termsTemplate = '1. Regular preventative maintenance as per agreed schedule.\n2. Replacement of consumable parts will be charged separately unless covered.\n3. Emergency breakdown calls attended within 24 business hours.',
     this.emailNotificationsEnabled = true,
     this.reminderDaysConfig = '30,7,1',
-    this.poweredBy = 'Citrus Informatics',
+    this.poweredBy = 'ZtoH Software',
   });
 
   List<int> get reminderDays {
@@ -64,7 +64,7 @@ class CompanySettings {
           (map['email_notifications_enabled'] as int? ?? 1) == 1,
       reminderDaysConfig:
           map['reminder_days_config'] as String? ?? '30,7,1',
-      poweredBy: map['powered_by'] as String? ?? 'Citrus Informatics',
+      poweredBy: map['powered_by'] as String? ?? 'ZtoH Software',
     );
   }
 

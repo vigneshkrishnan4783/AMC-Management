@@ -80,7 +80,7 @@ class AppDatabase {
       },
       onOpen: (db) async {
         try {
-          await db.execute('ALTER TABLE ${Tables.settings} ADD COLUMN powered_by TEXT DEFAULT "Citrus Informatics"');
+          await db.execute('ALTER TABLE ${Tables.settings} ADD COLUMN powered_by TEXT DEFAULT "ZtoH Software"');
         } catch (_) {}
 
         // Thoroughly purge any legacy sample data
@@ -124,22 +124,29 @@ class AppDatabase {
             final phone = cur.first['phone'] as String? ?? '';
             final bName = cur.first['business_name'] as String? ?? '';
             final addr = cur.first['address'] as String? ?? '';
+            final pBy = cur.first['powered_by'] as String? ?? '';
+
+            final Map<String, dynamic> updates = {};
+            if (pBy.contains('Citrus') || pBy.isEmpty) {
+              updates['powered_by'] = 'ZtoH Software';
+            }
             if (email == 'service@amcmanager.com' ||
                 bName == 'AMC Services Pvt Ltd' ||
                 bName == 'AMC Management' ||
                 phone.contains('98765') ||
                 addr.contains('101 Tech')) {
+              updates['email'] = 'vigneshkrishnan4786@gmail.com';
+              updates['phone'] = '';
+              updates['address'] = '';
+              updates['website'] = '';
+              updates['tax_number'] = '';
+              updates['business_name'] = '';
+              updates['powered_by'] = 'ZtoH Software';
+            }
+            if (updates.isNotEmpty) {
               await db.update(
                 Tables.settings,
-                {
-                  'email': 'vigneshkrishnan4786@gmail.com',
-                  'phone': '',
-                  'address': '',
-                  'website': '',
-                  'tax_number': '',
-                  'business_name': '',
-                  'powered_by': 'Citrus Informatics',
-                },
+                updates,
                 where: 'id = 1',
               );
             }
@@ -171,7 +178,7 @@ class AppDatabase {
         'address': '',
         'website': '',
         'tax_number': '',
-        'powered_by': 'Citrus Informatics',
+        'powered_by': 'ZtoH Software',
       },
       where: 'id = 1',
     );
